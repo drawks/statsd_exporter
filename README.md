@@ -41,32 +41,35 @@ without values (`#some_tag`) are not supported.
 
 ## Building and Running
 
-    $ go build
-    $ ./statsd_exporter --help
-    Usage of ./statsd_exporter:
-      -log.format value
-            If set use a syslog logger or JSON logging. Example: logger:syslog?appname=bob&local=7 or logger:stdout?json=true. Defaults to stderr.
-      -log.level value
-            Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal].
-      -statsd.add-suffix
-            Add the metric type (counter/gauge/timer) as suffix to the generated Prometheus metric (NOT recommended, but set by default for backward compatibility). (default true)
-      -statsd.listen-address string
-            The UDP address on which to receive statsd metric lines. DEPRECATED, use statsd.listen-udp instead.
-      -statsd.listen-tcp string
-            The TCP address on which to receive statsd metric lines. "" disables it. (default ":9125")
-      -statsd.listen-udp string
-            The UDP address on which to receive statsd metric lines. "" disables it. (default ":9125")
-      -statsd.mapping-config string
-            Metric mapping configuration file name.
-      -statsd.read-buffer int
-            Size (in bytes) of the operating system's transmit read buffer associated with the UDP connection. Please make sure the kernel parameters net.core.rmem_max is set to a value greater than the value specified.
-      -version
-            Print version information.
-      -web.listen-address string
-            The address on which to expose the web interface and generated Prometheus metrics. (default ":9102")
-      -web.telemetry-path string
-            Path under which to expose metrics. (default "/metrics")
-
+```
+$ go build
+$ ./statsd_exporter --help
+Usage of ./statsd_exporter:
+  -log.format value
+    	If set use a syslog logger or JSON logging. Example: logger:syslog?appname=bob&local=7 or logger:stdout?json=true. Defaults to stderr.
+  -log.level value
+    	Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal].
+  -statsd.add-suffix
+    	Add the metric type (counter/gauge/timer) as suffix to the generated Prometheus metric (NOT recommended, but set by default for backward compatibility). (default true)
+  -statsd.drop-unmapped
+    	Drop statsd metrics which have no matched mapping configured.
+  -statsd.listen-address string
+    	The UDP address on which to receive statsd metric lines. DEPRECATED, use statsd.listen-udp instead.
+  -statsd.listen-tcp string
+    	The TCP address on which to receive statsd metric lines. "" disables it. (default ":9125")
+  -statsd.listen-udp string
+    	The UDP address on which to receive statsd metric lines. "" disables it. (default ":9125")
+  -statsd.mapping-config string
+    	Metric mapping configuration file name.
+  -statsd.read-buffer int
+    	Size (in bytes) of the operating system's transmit read buffer associated with the UDP connection. Please make sure the kernel parameters net.core.rmem_max is set to a value greater than the value specified.
+  -version
+    	Print version information.
+  -web.listen-address string
+    	The address on which to expose the web interface and generated Prometheus metrics. (default ":9102")
+  -web.telemetry-path string
+    	Path under which to expose metrics. (default "/metrics")
+```
 ## Tests
 
     $ go test

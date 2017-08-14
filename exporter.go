@@ -359,7 +359,7 @@ func (b *Exporter) Listen(e <-chan Events) {
 						mapping,
 					)
 					if err == nil {
-						histogram.Observe(event.Value())
+						histogram.Observe(event.Value() / 1000) // prometheus presumes seconds, statsd millisecond
 						eventStats.WithLabelValues("timer").Inc()
 					} else {
 						log.Debugf(regErrF, metricName, err)

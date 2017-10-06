@@ -28,15 +28,17 @@ var (
 	identifierRE   = `[a-zA-Z_][a-zA-Z0-9_]+`
 	statsdMetricRE = `[a-zA-Z_](-?[a-zA-Z0-9_])+`
 
-	metricLineRE = regexp.MustCompile(`^(\*\.|` + statsdMetricRE + `\.)+(\*|` + statsdMetricRE + `)$`)
+	nodeRE       = `(` + statsdMetricRE + `|\*)`
+	metricLineRE = regexp.MustCompile(`^` + nodeRE + `(\.` + nodeRE + `)*$`)
 	labelLineRE  = regexp.MustCompile(`^(` + identifierRE + `)\s*=\s*"(.*)"$`)
 	metricNameRE = regexp.MustCompile(`^` + identifierRE + `$`)
 )
 
 type mapperConfigDefaults struct {
-	TimerType timerType `yaml:"timer_type"`
-	Buckets   []float64 `yaml:"buckets"`
-	MatchType matchType `yaml:"match_type"`
+	TimerType    timerType    `yaml:"timer_type"`
+	Buckets      []float64    `yaml:"buckets"`
+	MatchType    matchType    `yaml:"match_type"`
+	MapperAction mapperAction `yaml:"action"`
 }
 
 type metricMapper struct {
@@ -46,13 +48,15 @@ type metricMapper struct {
 }
 
 type metricMapping struct {
-	Match     string `yaml:"match"`
-	regex     *regexp.Regexp
-	Labels    prometheus.Labels `yaml:"labels"`
-	TimerType timerType         `yaml:"timer_type"`
-	Buckets   []float64         `yaml:"buckets"`
-	MatchType matchType         `yaml:"match_type"`
-	HelpText  string            `yaml:"help"`
+	Match        string `yaml:"match"`
+	regex        *regexp.Regexp
+	Name         string            `yaml:"name"`
+	Labels       prometheus.Labels `yaml:"labels"`
+	TimerType    timerType         `yaml:"timer_type"`
+	Buckets      []float64         `yaml:"buckets"`
+	MatchType    matchType         `yaml:"match_type"`
+	HelpText     string            `yaml:"help"`
+	MapperAction mapperAction      `yaml:"action"`
 }
 
 func (m *metricMapper) initFromYAMLString(fileContents string) error {
@@ -70,21 +74,24 @@ func (m *metricMapper) initFromYAMLString(fileContents string) error {
 		n.Defaults.MatchType = matchTypeGlob
 	}
 
+	if n.Defaults.MapperAction == mapperActionDefault {
+		n.Defaults.MapperAction = mapperActionStore
+	}
+
 	for i := range n.Mappings {
 		currentMapping := &n.Mappings[i]
 
 		// check that label is correct
-		for k, v := range currentMapping.Labels {
+		for k := range currentMapping.Labels {
 			if !metricNameRE.MatchString(k) {
 				return fmt.Errorf("invalid label key: %s", k)
 			}
-			if k == "name" && !metricNameRE.MatchString(v) {
-				return fmt.Errorf("metric name '%s' doesn't match regex '%s'", v, metricNameRE)
-			}
 		}
 
-		if _, ok := currentMapping.Labels["name"]; !ok {
+		if currentMapping.Name == "" {
 			return fmt.Errorf("line %d: metric mapping didn't set a metric name", i)
+		} else if !metricNameRE.MatchString(currentMapping.Name) {
+			return fmt.Errorf("metric name '%s' doesn't match regex '%s'", currentMapping.Name, metricNameRE)
 		}
 		if currentMapping.MatchType == "" {
 			currentMapping.MatchType = n.Defaults.MatchType
@@ -137,6 +144,13 @@ func (m *metricMapper) getMapping(statsdMetric string) (*metricMapping, promethe
 	defer m.mutex.Unlock()
 
 	for _, mapping := range m.Mappings {
+		if mapping.MatchType == matchTypeCatchAll {
+			labels := prometheus.Labels{}
+			for label, valueExpr := range mapping.Labels {
+				labels[label] = valueExpr
+			}
+			return &mapping, labels, true
+		}
 		matches := mapping.regex.FindStringSubmatchIndex(statsdMetric)
 		if len(matches) == 0 {
 			continue

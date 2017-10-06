@@ -15,27 +15,27 @@ package main
 
 import "fmt"
 
-type matchType string
+type mapperAction string
 
 const (
-	matchTypeGlob    matchType = "glob"
-	matchTypeRegex   matchType = "regex"
-	matchTypeDefault matchType = ""
+	mapperActionStore   mapperAction = "store"
+	mapperActionDrop    mapperAction = "drop"
+	mapperActionDefault mapperAction = ""
 )
 
-func (t *matchType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (t *mapperAction) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var v string
 	if err := unmarshal(&v); err != nil {
 		return err
 	}
 
-	switch matchType(v) {
-	case matchTypeRegex:
-		*t = matchTypeRegex
-	case matchTypeGlob, matchTypeDefault:
-		*t = matchTypeGlob
+	switch mapperAction(v) {
+	case mapperActionDrop:
+		*t = mapperActionDrop
+	case mapperActionStore, mapperActionDefault:
+		*t = mapperActionStore
 	default:
-		return fmt.Errorf("invalid match type %q", v)
+		return fmt.Errorf("invalid action %q", v)
 	}
 	return nil
 }

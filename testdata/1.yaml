@@ -1,0 +1,63 @@
+---
+mappings:
+# single node match without labels
+- match: foo
+  name: "foo_events"
+# single node match with static label
+- match: bar
+  name: "bar_events"
+  labels:
+    bing: "bong"
+# single node match with explicit help text
+- match: bang
+  name: "bang_events"
+  help: "total number of bang events"
+# typical multiple node match without labels
+- match: test.dispatcher.*.*.*
+  name: "dispatch_events"
+# typical multiple node match with static labels
+- match: test.receiver.*.*.*
+  name: "receive_events"
+  labels: 
+    job_type: "batch"
+# typical multiple node match with mixed labels and explicit store action
+- match: test.queue.*.*.*
+  name: "queue_events"
+  action: store
+  labels: 
+    processor: "$1"
+    action: "$2"
+    result: "$3"
+    job_type: "stream"
+# basic regex match without labels
+- match: (\w+)\.foo
+  name: "subfoo"
+  match_type: regex
+# regex match with drop action
+- match: thing.(\d+).garbage
+  name: "drop_garbage"
+  match_type: regex
+  action: drop
+# complex regex match with mixed labels
+- match: test\.worker-(\d+)\.task\.(\w+)$
+  name: "worker_events"
+  match_type: regex
+  labels:
+    instance: "$1"
+    task: "$2"
+    job_type: "ephemeral"
+# typical regex match with dynamic labels and explicit store action
+- match: (.*)\.(.*)-(.*)\.(.*)
+  name: "proxy_requests_total"
+  match_type: regex
+  action: store
+  labels:
+    job: "$1"
+    protocol: "$2"
+    endpoint: "$3"
+    result: "$4"
+# default drop rule
+- match:
+  match_type: catchall
+  name: catchall
+  action: drop

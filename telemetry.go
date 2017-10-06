@@ -29,6 +29,10 @@ var (
 		Name: "statsd_exporter_events_unmapped_total",
 		Help: "The total number of StatsD events no mapping was found for.",
 	})
+	eventsDropped = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "statsd_exporter_events_dropped_total",
+		Help: "The total number of StatsD events dropped based on a mapping rule.",
+	})
 	networkStats = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "statsd_exporter_packets_total",
@@ -58,6 +62,8 @@ var (
 
 func init() {
 	prometheus.MustRegister(eventStats)
+	prometheus.MustRegister(eventsUnmapped)
+	prometheus.MustRegister(eventsDropped)
 	prometheus.MustRegister(networkStats)
 	prometheus.MustRegister(configLoads)
 	prometheus.MustRegister(mappingsCount)
